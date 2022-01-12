@@ -22,7 +22,7 @@ mongo = PyMongo(app)
 
 # using /add route using method post to send or add this new user in to the database
 
-@app.route("/add", methods=['POST'])
+@app.route("/api/users", methods=['POST'])
 def create_user():
     _json = request.json
     _id = _json['id']
@@ -51,15 +51,32 @@ def create_user():
             return not_found() 
 
 # using this /users we are listing all user data 
-@app.route("/users")
+@app.route("/api/users")
 def users():
-    users = mongo.db.user.find()
+    
+    if int(request.args['limit']) and request.args['name'] and  request.args['age'] :
+        limi = int(request.args['limit'])
+        n = request.args['name']
+        p = request.args['page']
+        
+        users =  mongo.db.user.find( {"$or":[{ "name": { "$regex": n}}, {"last_name":{"$regex": n } }]},).sort("age", 1).limit(limi*1).skip((p-1)*limi)
+    
+    else:
+        users = mongo.db.user.find()
+        
     resp = dumps(users)
 
     return resp
-    
+
+# @app.route("/api/users?limit=10")
+# def li(limit):
+#     users = mongo.db.user.find().limit(1)
+#     resp = dumps(users)
+#     return resp
+
+
 # using particular user id we can their data
-@app.route('/user/<id>')
+@app.route('/api/users/<id>')
 def  user(id):
      user = mongo.db.user.find_one({'_id':ObjectId(id)})
      resp = dumps(user)
@@ -67,14 +84,14 @@ def  user(id):
 
 # using this /delete/id we are delete particular use from the database using delete method
 
-@app.route('/delete/<id>', methods=['DELETE'])
+@app.route('/api/users/<id>', methods=['DELETE'])
 def delete(id):
     mongo.db.user.delete_one({'_id':ObjectId(id)})
     resp = jsonify("User Deleted Successfully")
     resp.status_code = 200
     return resp 
 
-@app.route('/users/<id>', methods=['PUT'])
+@app.route('/api/users/<id>', methods=['PUT'])
 def update_user(id):
 
     _json = request.json
