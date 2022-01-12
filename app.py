@@ -20,6 +20,7 @@ app.config['MONGO_URI'] = "mongodb://localhost:27017/Users"
 mongo = PyMongo(app)
 
 
+# using /add route using method post to send or add this new user in to the database
 
 @app.route("/add", methods=['POST'])
 def create_user():
@@ -49,7 +50,63 @@ def create_user():
     else:
             return not_found() 
 
+# using this /users we are listing all user data 
+@app.route("/users")
+def users():
+    users = mongo.db.user.find()
+    resp = dumps(users)
 
+    return resp
+    
+# using particular user id we can their data
+@app.route('/user/<id>')
+def  user(id):
+     user = mongo.db.user.find_one({'_id':ObjectId(id)})
+     resp = dumps(user)
+     return resp
+
+# using this /delete/id we are delete particular use from the database using delete method
+
+@app.route('/delete/<id>', methods=['DELETE'])
+def delete(id):
+    mongo.db.user.delete_one({'_id':ObjectId(id)})
+    resp = jsonify("User Deleted Successfully")
+    resp.status_code = 200
+    return resp 
+
+@app.route('/users/<id>', methods=['PUT'])
+def update_user(id):
+
+    _json = request.json
+    _id = id
+    _first_name = 'first_name'
+    _email = 'email'
+    _last_name = 'last_name'
+    _company_name = 'company_name'
+    _city = 'city'
+    _state = 'state'
+    _web = 'web'
+    _age = 'age'
+    _zip = 'zip'
+
+        
+    if _id and _zip and _first_name and _email and _last_name and _company_name and _company_name and _city and _state and _zip and _web and request.method == 'PUT':
+            mongo.db.user.update_one({'_id': ObjectId(_id['$oid']) if '$oid' in _id else ObjectId(_id)}, {'$set':  {'id':_id, 'zip': _zip, 'name': _first_name, 'last_name': _last_name, 'company_name': _company_name, 'city': _city, 'state': _state, 'web': _web, 'age': _age}}) 
+           
+            resp = jsonify("User updated successfully")
+
+            resp.status_code = 200 
+
+            return resp
+
+
+    else:
+            return not_found() 
+
+
+
+
+     
 @app.errorhandler(404)
 
 def not_found(error=None):
